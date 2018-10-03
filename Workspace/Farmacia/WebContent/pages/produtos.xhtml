@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	template="/templates/modeloSistema.xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+
+	<!--  Esta será a pagina de fornocedores que irá ser listados no meu sistema-->
+
+
+	<ui:define name="menu">
+		<ui:include src="/includes/menu.xhtml" />
+	</ui:define>
+
+	<ui:define name="conteudo">
+
+		<h:form id="frmprodutos">
+			<!-- Formulário onde irá fazer a comunicação do meu FornecedoresBean para trazer meus Dados para listar -->
+			<p:dataTable id="tbprodutos" widgetVar="tabelaProdutos"
+				emptyMessage="Nenhum registro encontrado"
+				value="#{MBProdutos.itens}" var="item"
+				filteredValue="#{MBProdutos.itensFiltrados}" paginator="true"
+				rows="6">
+				<!-- faz a conexao com o arquiv o bean, trazendo os itens que sao os dados e organizando a lista utilizando o paginator com 8 arquivos cada -->
+
+				<f:facet name="header">Lista de Produtos</f:facet>
+				<!-- cabeçalho -->
+
+				<p:column headerText="Código" sortBy="#{item.codigo}"
+					filterBy="#{item.codigo}">
+					<h:outputText value="#{item.codigo}" />
+				</p:column>
+
+				<p:column headerText="Descrição" sortBy="#{item.descricao}"
+					filterBy="#{item.descricao}">
+					<h:outputText value="#{item.descricao}" />
+				</p:column>
+
+				<p:column headerText="Quantidade" sortBy="#{item.quantidade}"
+					filterBy="#{item.quantidade}">
+					<h:outputText value="#{item.quantidade}" />
+				</p:column>
+
+				<p:column headerText="Valor" sortBy="#{item.preco}"
+					filterBy="#{item.preco}">
+					<h:outputText value="#{item.preco}" />
+				</p:column>
+
+				<p:column headerText="Fornecedor"
+					sortBy="#{item.fornecedores.descricao}"
+					filterBy="#{item.fornecedores.descricao}">
+					<h:outputText value="#{item.fornecedores.descricao}" />
+				</p:column>
+
+				<p:column headerText="Opções">
+					<p:commandButton icon="ui-icon-trash"
+						oncomplete="PF('dlgproExcluir').show();"
+						update=":frmproExcluir:pnproExcluir">
+						<!-- Botão de lixeira dentro de uma coluna que vai excluir meus itens inclusos. CHamando o metodo prepararExcluir do BEan-->
+						<f:setPropertyActionListener value="#{item}"
+							target="#{MBProdutos.produtos}">
+						</f:setPropertyActionListener>
+					</p:commandButton>
+
+					<p:commandButton icon="ui-icon-pencil"
+						oncomplete="PF('dlgproEditar').show();"
+						actionListener="#{MBProdutos.prepararEditar}"
+						update=":frmproEditar:pnproEditar :msgSucessoErro">
+						<f:setPropertyActionListener value="#{item}"
+							target="#{MBProdutos.produtos}">
+						</f:setPropertyActionListener>
+					</p:commandButton>
+
+				</p:column>
+
+				<f:facet name="footer">
+					<p:commandButton value="Novo" oncomplete="PF('dlgproNovo').show();"
+						actionListener="#{MBProdutos.prepararNovo}"
+						update=":frmproNovo:pnproNovo :msgSucessoErro" />
+				</f:facet>
+				<!-- rodapé com botoes que atualiza quando clicado para nao ficar dados inseridos anteriormente-->
+			</p:dataTable>
+		</h:form>
+
+		<!-- AQUI FICA O DIÁLOGO DE ADICIONAR NOVO VULGO SALVAR -->
+		<p:dialog widgetVar="dlgproNovo" closable="false" draggable="false"
+			resizable="false" header="Cadastrar Produtos" modal="true"
+			appendTo="@(body)">
+
+			<!-- Uma caixa de diálogo que será aberta para listar novos dados  -->
+			<h:form id="frmproNovo">
+				<h:panelGrid id="pnproNovo" columns="2">
+					<h:outputLabel value="Descrição: " />
+					<h:inputText size="30" maxlength="50"
+						value="#{MBProdutos.produtos.descricao}" required="true"
+						requiredMessage="O campo descrição é obrigatório" />
+
+					<h:outputLabel value="Preço: " />
+					<h:inputText size="15" maxlength="50"
+						value="#{MBProdutos.produtos.preco}" required="true"
+						requiredMessage="O campo preço é obrigatório" />
+
+					<h:outputLabel value="Quantidade: " />
+					<h:inputText size="15" maxlength="50"
+						value="#{MBProdutos.produtos.quantidade}" required="true"
+						requiredMessage="O campo quantidade é obrigatório" />
+					
+					<h:outputLabel for="txtFor" value="Fornecedor: "/>
+					<p:selectOneMenu id="txtFor"
+						value="#{MBProdutos.produtos.fornecedores.codigo}" 
+						filter="true"
+						required="true"
+						requiredMessage="O campo fornecedor é obrigatório">
+						<f:selectItem itemLabel="Selecione um Fornecedor" />
+						<f:selectItems value="#{MBProdutos.comboFornecedores}" var="item"
+							itemValue="#{item.codigo}" itemLabel="#{item.descricao}">
+							<!-- Item value é oq eu quero q pegue do bd || e o item label é oq eu quero q apareça para mim -->
+
+						</f:selectItems>
+					</p:selectOneMenu>
+				</h:panelGrid>
+
+				<h:panelGrid columns="3">
+					<p:commandButton value="Gravar" process="@this" actionListener="#{MBProdutos.novo}"
+						oncomplete="PF('dlgproNovo').hide(); PF('tabelaProdutos').clearFilters();"
+						update=":frmprodutos:tbprodutos :msgSucessoErro" />
+					<!-- quando apertar o botao, irá la no meu metodo salvar da classe bean e chamará a função de execução -->
+					<p:commandButton value="Cancelar"
+						onclick="PF('dlgproNovo').hide();" />
+					<!-- on click com hide serve para fechar a janela -->
+				</h:panelGrid>
+			</h:form>
+		</p:dialog>
+
+		<!-- AQUI FICA O DIÁLOGO DE EXCLUSÃO -->
+		<p:dialog widgetVar="dlgproExcluir" closable="false" draggable="false"
+			resizable="false" header="Excluir Produto" modal="true"
+			appendTo="@(body)">
+			<!-- Aparecerá caixinha de texto que perguntará se quer mesmo excluir item -->
+
+			<h:form id="frmproExcluir">
+				<!-- toda vez que for trabalhar com ajax, dar um id e abrir um formulario -->
+
+				<h:panelGrid id="pnproExcluir" columns="2">
+					<!-- panel para trabalhar com os botoes -->
+					<h:outputText value="Código" />
+					<h:outputText value="#{MBProdutos.produtos.codigo}" />
+					<h:outputText value="Descrição" />
+					<h:outputText value="#{MBProdutos.produtos.descricao}" />
+					<h:outputText value="#{MBProdutos.produtos.quantidade}" />
+					<!-- captura o codigo da minha classe BEAN  e mostra na tela dentro do text-->
+				</h:panelGrid>
+
+				<h:panelGrid columns="2">
+					<!-- panel que vai conter o botao de excluir e cancelar -->
+					<p:commandButton value="Excluir"
+						process="@this"
+						actionListener="#{MBProdutos.excluir}"
+						oncomplete="PF('dlgproExcluir').hide(); PF('tabelaProdutos').clearFilters();"
+						update=":frmprodutos:tbprodutos :msgSucessoErro" />
+					<p:commandButton value="Cancelar"
+						onclick="PF('dlgproExcluir').hide();" />
+				</h:panelGrid>
+			</h:form>
+		</p:dialog>
+
+		<!-- AQUI FICA O DIÁLOGO DE EDIÇÃO -->
+		<p:dialog widgetVar="dlgproEditar" closable="false" draggable="false"
+			resizable="false" header="Editar Produtos" modal="true"
+			appendTo="@(body)">
+			<!-- Aparecerá caixinha de texto que perguntará se quer mesmo excluir item -->
+
+			<h:form id="frmproEditar">
+				<!-- toda vez que for trabalhar com ajax, dar um id e abrir um formulario -->
+				<h:panelGrid id="pnproEditar" columns="2">
+					<!-- panel para trabalhar com os botoes -->
+					<h:outputText value="Código" />
+					<h:outputText value="#{MBProdutos.produtos.codigo}" />
+					<!-- captura o codigo da minha classe BEAN  e mostra na tela dentro do text-->
+					<h:outputText value="Descrição" />
+					<h:inputText value="#{MBProdutos.produtos.descricao}"
+						required="true" requiredMessage="O campo descrição é obrigatório" />
+					<h:outputText value="Preço" />
+					<h:inputText value="#{MBProdutos.produtos.preco}" required="true"
+						requiredMessage="O campo preço é obrigatório" />
+					<h:outputText value="Quantidade" />
+					<h:inputText value="#{MBProdutos.produtos.quantidade}"
+						required="true" requiredMessage="O campo quantidade é obrigatório" />
+
+
+					<h:outputText value="Fornecedor:" />
+					<!-- DEU CERTO AM-->
+					<p:selectOneMenu
+						value="#{MBProdutos.produtos.fornecedores.codigo}" 
+						required="true"
+						requiredMessage="O campo fornecedor é obrigatório">
+				
+						<f:selectItems value="#{MBProdutos.comboFornecedores}" var="item"
+							itemValue="#{item.codigo}" itemLabel="#{item.descricao}">
+							<!-- Item value é oq eu quero q pegue do bd || e o item label é oq eu quero q apareça para mim -->
+
+						</f:selectItems>
+					</p:selectOneMenu>
+				</h:panelGrid>
+
+				<h:panelGrid columns="3">
+					<!-- panel que vai conter o botao de excluir e cancelar -->
+					<p:commandButton value="Editar"
+						
+						actionListener="#{MBProdutos.editar}"
+						oncomplete="PF('dlgproEditar').hide(); PF('tabelaProdutos').clearFilters();"
+						update=":frmprodutos:tbprodutos :msgSucessoErro" />
+					<p:commandButton value="Cancelar"
+						onclick="PF('dlgproEditar').hide();" />
+					<!-- hide significa esconder a caixa de dialogo -->
+				</h:panelGrid>
+			</h:form>
+		</p:dialog>
+	</ui:define>
+</ui:composition>
+
+
+
+
